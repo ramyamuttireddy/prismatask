@@ -1,8 +1,8 @@
 import Elysia from "elysia";
 
-const productRouter = new Elysia().group("/products",(app) => 
-    app.get("/list",() => {
-        return[];
+const productRouter = new Elysia().group("/products", (app) => 
+    app.get("/",() => {
+        return [];
     })
     .get("/:id",(req)=> {
         return req.params.id
@@ -19,4 +19,4 @@ const productRouter = new Elysia().group("/products",(app) =>
     })
 )
 
-export default productRouter
+export default productRouter;
