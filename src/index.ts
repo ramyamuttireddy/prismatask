@@ -1,20 +1,32 @@
-import { Elysia } from "elysia";
-import productRouter from "./routes/productRouter";
-import userRouter from "./routes/userRouter";
+import cors from "@elysiajs/cors";
 import swagger from "@elysiajs/swagger";
- 
-
-const app = new Elysia()
-
-app.get("/",(req) =>"Hello Elysia");
-app.use(swagger())
-app.use(productRouter)
-app.use(userRouter)
-.listen(3000);
+import Elysia from "elysia";
+import { userRouter } from "./routes/userRouter";
+import { logger } from "@bogeychan/elysia-logger";
+import { productRouter } from "./routes/productsRouter";
+import  {autoPlugin } from "./middleware/autoPlugin";
+import { authRouter } from "./routes/autoRouter";
+import { orderRouter } from "./routes/orderRouter";
 
 
+const app =new Elysia()
 
+app.use(cors())
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+  app.use(logger())
+  .use(
+    swagger({
+      path:"/swagger"
+    })
+  )
+  .get("/", () => {
+    return "main route";
+  })
+  .use(userRouter)
+  .use(productRouter)
+  .use(authRouter)
+  .use(orderRouter)
+  // .use(autoPlugin)
+  .listen(3000);
+
+console.log(`Elygia Is Running At ${app.server?.hostname}:${app.server?.port}`)
