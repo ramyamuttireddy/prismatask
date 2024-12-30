@@ -1,8 +1,8 @@
 import Elysia ,{t} from "elysia";
 import { autoPlugin } from "../middleware/autoPlugin";
 import { prisma } from "../models/db";
-import { randomUUIDv7 } from "bun";
 import Stripe from "stripe";
+import { nanoid } from "nanoid";
 
 const stripeClient = new Stripe(Bun.env.STRIPE_SECRET_KEY as string, {
  apiVersion:"2024-12-18.acacia"
@@ -13,7 +13,7 @@ export const orderRouter = new Elysia({prefix:"/orders"})
 .post("/" , async({user ,body}) => {
  try {
   const {orderItems , deliveryAddress , totalPrice } = body;
-  const orderId = "order_" + randomUUIDv7();
+  const orderId = "order_" + nanoid();
   const paymentIntent = await stripeClient.paymentIntents.create({
     amount:totalPrice*100,
     currency:"inr"
