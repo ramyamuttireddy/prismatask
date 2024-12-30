@@ -1,6 +1,5 @@
 import Elysia, { error, t } from "elysia";
 import { prisma } from "../models/db";
-import { color } from "bun";
 
 export const userRouter = new Elysia({ prefix: "/users" })
 

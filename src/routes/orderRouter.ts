@@ -8,9 +8,9 @@ const stripeClient = new Stripe(Bun.env.STRIPE_SECRET_KEY as string, {
  apiVersion:"2024-12-18.acacia"
 })
 
-export const orderRouter = new Elysia({prefix:"/order"})
+export const orderRouter = new Elysia({prefix:"/orders"})
 .use(autoPlugin)
-.post("/create" , async({user ,body}) => {
+.post("/" , async({user ,body}) => {
  try {
   const {orderItems , deliveryAddress , totalPrice } = body;
   const orderId = "order_" + randomUUIDv7();
@@ -44,7 +44,7 @@ const __orderItems = await prisma.orderItem.createMany({
           quantity : orderItem.quantity,
           price : orderItem.price,
           orderId ,
-          produtId: orderItem.produtId
+          productId: orderItem.productId
         }
      })
    })
@@ -64,7 +64,7 @@ const __orderItems = await prisma.orderItem.createMany({
   totalPrice:t.Number(),
   orderItems : t.Array(
     t.Object({
-      produtId : t.String(),
+      productId : t.String(),
       quantity : t.Number(),
       price: t.Number()
     })
@@ -80,4 +80,6 @@ const __orderItems = await prisma.orderItem.createMany({
     }
   })
   return orders
+},{
+  
 })
