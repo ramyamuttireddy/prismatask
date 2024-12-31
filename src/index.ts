@@ -7,6 +7,8 @@ import { productRouter } from "./routes/productsRouter";
 import  {autoPlugin } from "./middleware/autoPlugin";
 import { authRouter } from "./routes/autoRouter";
 import { orderRouter } from "./routes/orderRouter";
+import { webhook } from "./routes/webhook";
+
 
 
 const app =new Elysia()
@@ -23,6 +25,7 @@ app.use(cors())
     return "main route";
   })
   .use(userRouter)
+  .use(webhook)
   .use(productRouter)
   .use(authRouter)
   .use(orderRouter)
