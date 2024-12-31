@@ -32713,7 +32713,7 @@ var orderRouter = new Elysia({ prefix: "/orders" }).use(autoPlugin).post("/", as
 }, {});
 
 // src/routes/webhook.ts
-var webhook = new Elysia({ prefix: "webhook" }).post("/", async ({ body, headers, response }) => {
+var webhook = new Elysia({}).post("/webhook", async ({ body, headers, response }) => {
   const stripeClient2 = new stripe_esm_worker_default(Bun.env.STRIPE_SECRET_KEY, {
     apiVersion: "2024-12-18.acacia"
   });

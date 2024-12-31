@@ -1,9 +1,9 @@
 import Elysia, { error } from "elysia";
 import Stripe from "stripe";
 
-export const webhook = new Elysia({prefix:"webhook"})
+export const webhook = new Elysia({})
 
-.post("/" ,async ({body , headers ,response}) => {
+.post("/webhook" ,async ({body , headers ,response}) => {
 
 const stripeClient = new Stripe(Bun.env.STRIPE_SECRET_KEY as string, {
 apiVersion:"2024-12-18.acacia"
