@@ -25,6 +25,7 @@ switch(event.type) {
         break;
     case "payment_intent.created":
         const paymentIntentCreated = event.data.object;
+        console.log(paymentIntentCreated,"payment_created")
         break;
 
     case "payment_intent.succeeded":

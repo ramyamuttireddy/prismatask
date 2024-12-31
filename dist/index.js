@@ -32712,6 +32712,36 @@ var orderRouter = new Elysia({ prefix: "/orders" }).use(autoPlugin).post("/", as
   return orders;
 }, {});
 
+// src/routes/webhook.ts
+var webhook = new Elysia({ prefix: "webhook" }).post("/", async ({ body, headers, response }) => {
+  const stripeClient2 = new stripe_esm_worker_default(Bun.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2024-12-18.acacia"
+  });
+  const sig = headers["stripe-signature"];
+  let event;
+  try {
+    event = stripeClient2.webhooks.constructEvent(body, sig, "whsec_qA0ujtxF6ke2P9wr0kaEUpnDZtcWfsWu");
+  } catch (err) {
+    return error3(400, "Bad Request");
+  }
+  switch (event.type) {
+    case "charge.succeeded":
+      const chargeSucceeded = event.data.object;
+      break;
+    case "payment_intent.created":
+      const paymentIntentCreated = event.data.object;
+      console.log(paymentIntentCreated, "payment_created");
+      break;
+    case "payment_intent.succeeded":
+      const paymentIntentSucceeded = event.data.object;
+      console.log("payment completed", paymentIntentSucceeded);
+      break;
+    default:
+      console.log(`unhandled event type ${event.type}`);
+  }
+  return { received: true };
+});
+
 // src/index.ts
 var app = new Elysia;
 app.use(src_default());
@@ -32719,5 +32749,5 @@ app.use(logger()).use(src_default2({
   path: "/swagger"
 })).get("/", () => {
   return "main route";
-}).use(userRouter).use(productRouter).use(authRouter).use(orderRouter).listen(3000);
+}).use(userRouter).use(webhook).use(productRouter).use(authRouter).use(orderRouter).listen(3000);
 console.log(`Elygia Is Running At ${app.server?.hostname}:${app.server?.port}`);
