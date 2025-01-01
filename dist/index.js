@@ -32712,34 +32712,120 @@ var orderRouter = new Elysia({ prefix: "/orders" }).use(autoPlugin).post("/", as
   return orders;
 }, {});
 
-// src/routes/webhook.ts
-var webhook = new Elysia({}).post("/webhook", async ({ body, headers, response }) => {
-  const stripeClient2 = new stripe_esm_worker_default(Bun.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2024-12-18.acacia"
-  });
-  const sig = headers["stripe-signature"];
+// src/routes/webhookrouter.ts
+var stripe = new stripe_esm_worker_default("sk_test_51QaCyaKjZUK3Y9FGnXMGBcOFXA3dDqWJkLIxuKrJ9wfTLcK6mDyNm3yWeBMGu7gHdknpoI2EQGENWDgL8Rk0KR4J00q2sJC4H2", {
+  apiVersion: "2024-12-18.acacia"
+});
+var STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+var webhookRouter = new Elysia({ prefix: "/webhook" }).onParse(async ({ request, headers }) => {
+  if (headers["content-type"] === "application/json;charset=utf-8") {
+    const arrayBuffer = await Bun.readableStreamToArrayBuffer(request.body);
+    const rawBody = Buffer.from(arrayBuffer);
+    return rawBody;
+  }
+}).post("/", async ({ request, body }) => {
+  const signature = request.headers.get("stripe-signature");
+  if (!signature) {
+    throw new Error("No signature provided");
+  }
   let event;
+  console.log({ signature });
   try {
-    event = stripeClient2.webhooks.constructEvent(body, sig, "whsec_qA0ujtxF6ke2P9wr0kaEUpnDZtcWfsWu");
+    event = await stripe.webhooks.constructEventAsync(body, signature, "whsec_qA0ujtxF6ke2P9wr0kaEUpnDZtcWfsWu");
+  } catch (error5) {
+    console.log("Webhook signature verification failed:", error5);
+    throw new Error(`Webhook Error: `);
+  }
+  try {
+    switch (event.type) {
+      case "payment_intent.succeeded": {
+        const paymentIntent = event.data.object;
+        const booking = await prisma.order.findFirst({
+          where: {
+            paymentIntenId: paymentIntent.id
+          }
+        });
+        if (!booking) {
+          throw new Error(`No booking found for payment intent ${paymentIntent.id}`);
+        }
+        await prisma.order.update({
+          where: {
+            id: booking.id
+          },
+          data: {
+            paymentStatus: "PAID"
+          }
+        });
+        console.log(`Payment succeeded for booking ${booking.id}`);
+        break;
+      }
+      case "payment_intent.payment_failed": {
+        const paymentIntent = event.data.object;
+        const booking = await prisma.order.findFirst({
+          where: {
+            paymentIntenId: paymentIntent.id
+          }
+        });
+        if (!booking) {
+          throw new Error(`No booking found for payment intent ${paymentIntent.id}`);
+        }
+        await prisma.order.update({
+          where: {
+            id: booking.id
+          },
+          data: {
+            paymentStatus: "FAILED"
+          }
+        });
+        console.log(`Payment failed for booking ${booking.id}`);
+        break;
+      }
+      case "payment_intent.requires_action": {
+        const paymentIntent = event.data.object;
+        const booking = await prisma.order.findFirst({
+          where: {
+            paymentIntenId: paymentIntent.id
+          }
+        });
+        if (booking) {
+          await prisma.order.update({
+            where: {
+              id: booking.id
+            },
+            data: {
+              paymentStatus: "PENDING"
+            }
+          });
+        }
+        break;
+      }
+      case "payment_intent.canceled": {
+        const paymentIntent = event.data.object;
+        const booking = await prisma.order.findFirst({
+          where: {
+            paymentIntenId: paymentIntent.id
+          }
+        });
+        if (booking) {
+          await prisma.order.update({
+            where: {
+              id: booking.id
+            },
+            data: {
+              paymentStatus: "FAILED"
+            }
+          });
+        }
+        break;
+      }
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+    return { received: true };
   } catch (err) {
-    return error3(400, "Bad Request");
+    console.error("Error processing webhook:", err);
+    throw new Error(`Webhook handler failed: ${err.message}`);
   }
-  switch (event.type) {
-    case "charge.succeeded":
-      const chargeSucceeded = event.data.object;
-      break;
-    case "payment_intent.created":
-      const paymentIntentCreated = event.data.object;
-      console.log(paymentIntentCreated, "payment_created");
-      break;
-    case "payment_intent.succeeded":
-      const paymentIntentSucceeded = event.data.object;
-      console.log("payment completed", paymentIntentSucceeded);
-      break;
-    default:
-      console.log(`unhandled event type ${event.type}`);
-  }
-  return { received: true };
 });
 
 // src/index.ts
@@ -32749,5 +32835,5 @@ app.use(logger()).use(src_default2({
   path: "/swagger"
 })).get("/", () => {
   return "main route";
-}).use(userRouter).use(webhook).use(productRouter).use(authRouter).use(orderRouter).listen(3000);
+}).use(userRouter).use(webhookRouter).use(productRouter).use(authRouter).use(orderRouter).listen(3000);
 console.log(`Elygia Is Running At ${app.server?.hostname}:${app.server?.port}`);
