@@ -11,7 +11,7 @@ export const autoPlugin =  (app: Elysia) =>
             secret : Bun.env.JWT_TOKEN as string,
         })
     )
-.derive(async({jwt,headers,set}) =>{
+.derive(async({jwt,headers}) =>{
  const authorization = headers.authorization;
  if(!authorization?.startsWith("Bearer")){
     return error(401,"Unauthorized")
