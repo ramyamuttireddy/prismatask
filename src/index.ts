@@ -4,10 +4,8 @@ import Elysia from "elysia";
 import { userRouter } from "./routes/userRouter";
 import { logger } from "@bogeychan/elysia-logger";
 import { productRouter } from "./routes/productsRouter";
-import  {autoPlugin } from "./middleware/autoPlugin";
 import { authRouter } from "./routes/autoRouter";
 import { orderRouter } from "./routes/orderRouter";
-import { webhook } from "./routes/webhook";
 import { webhookRouter } from "./routes/webhookrouter";
 
 
@@ -26,9 +24,7 @@ app.use(cors())
     return "main route";
   })
   .use(userRouter)
-  .use(webhookRouter
-    
-  )
+  .use(webhookRouter)
   .use(productRouter)
   .use(authRouter)
   .use(orderRouter)
