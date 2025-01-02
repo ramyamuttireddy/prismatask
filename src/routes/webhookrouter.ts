@@ -3,12 +3,12 @@ import Stripe from "stripe";
 import { prisma } from "../models/db";
 import { webhook } from "./webhook";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+const stripe = new Stripe(Bun.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-12-18.acacia",
 });
 
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
-console.log(STRIPE_WEBHOOK_SECRET,"webhook")
+const STRIPE_WEBHOOK_SECRET = Bun.env.STRIPE_WEBHOOK_SECRET!;
+
 
 export const webhookRouter = new Elysia({ prefix: "/webhook" })
 
@@ -21,7 +21,7 @@ export const webhookRouter = new Elysia({ prefix: "/webhook" })
   })
   .post("/", async ({ request, body }) => {
     const signature = request.headers.get("stripe-signature");
-
+    console.log(STRIPE_WEBHOOK_SECRET,"webhook")
     if (!signature) {
       throw new Error("No signature provided");
     }
