@@ -15,6 +15,7 @@ export const productRouter = new Elysia({ prefix: "/products" })
     }
   })
 
+
   // Create a new product
   .post(
     "/create",
@@ -46,7 +47,7 @@ export const productRouter = new Elysia({ prefix: "/products" })
       }),
     }
   )
-
+.use(autoPlugin)
   // Fetch a specific product by ID
   .get(
     "/:id",
@@ -132,5 +133,5 @@ export const productRouter = new Elysia({ prefix: "/products" })
   )
 
   // Use the autoPlugin for additional middleware
-  .use(autoPlugin);
+  
 

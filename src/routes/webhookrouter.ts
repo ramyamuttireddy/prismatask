@@ -1,7 +1,6 @@
 import Elysia, { error } from "elysia";
 import Stripe from "stripe";
 import { prisma } from "../models/db";
-import { webhook } from "./webhook";
 
 const stripe = new Stripe(Bun.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-12-18.acacia",
@@ -9,19 +8,16 @@ const stripe = new Stripe(Bun.env.STRIPE_SECRET_KEY as string, {
 
 const STRIPE_WEBHOOK_SECRET = Bun.env.STRIPE_WEBHOOK_SECRET!;
 
-
 export const webhookRouter = new Elysia({ prefix: "/webhook" })
 
-  .onParse(async ({ request, headers }) => {
-    if (headers["content-type"] === "application/json;charset=utf-8") {
-      const arrayBuffer = await Bun.readableStreamToArrayBuffer(request.body!);
-      const rawBody = Buffer.from(arrayBuffer);
-      return rawBody;
-    }
+  .onParse(async ({ request }) => {
+    const arrayBuffer = await Bun.readableStreamToArrayBuffer(request.body!);
+    const rawBody = Buffer.from(arrayBuffer);
+    return rawBody;
   })
   .post("/", async ({ request, body }) => {
     const signature = request.headers.get("stripe-signature");
-    console.log(STRIPE_WEBHOOK_SECRET,"webhook")
+    console.log(STRIPE_WEBHOOK_SECRET, "webhook");
     if (!signature) {
       throw new Error("No signature provided");
     }
@@ -30,7 +26,7 @@ export const webhookRouter = new Elysia({ prefix: "/webhook" })
 
     try {
       event = await stripe.webhooks.constructEventAsync(
-        body as unknown as string,
+        body as Buffer,
         signature,
         STRIPE_WEBHOOK_SECRET
       );
@@ -55,10 +51,8 @@ export const webhookRouter = new Elysia({ prefix: "/webhook" })
               `No booking found for payment intent ${paymentIntent.id}`
             );
           }
-
-          // Update booking status
-
-          await prisma.order.update({
+         // Update booking status
+       await prisma.order.update({
             where: {
               id: booking.id,
             },
